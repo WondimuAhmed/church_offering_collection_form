@@ -8,9 +8,11 @@
     body { font-family: Arial, sans-serif; margin: 20px; }
     h2 { margin-top: 30px; }
     .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
-    .hidden { display: none; }
     .entry { margin-bottom: 10px; }
     button { margin-top: 10px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    table, th, td { border: 1px solid black; }
+    th, td { padding: 8px; text-align: left; }
   </style>
 </head>
 <body>
@@ -33,6 +35,8 @@
 
     <button type="submit">Submit</button>
   </form>
+
+  <div id="output"></div>
 
   <script>
     const sections = [
@@ -73,13 +77,21 @@
 
     document.getElementById("offeringForm").addEventListener("submit", function(e) {
       e.preventDefault();
-
       const formData = new FormData(this);
-      const emailBody = Array.from(formData.entries()).map(([key, val]) => `${key}: ${val}`).join("\n");
-      const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com &su=Sunday%20Offering%20Form&body=${encodeURIComponent(emailBody)}`;
+
+      let htmlTable = '<h2>Submitted Form</h2><table><tr><th>Field</th><th>Value</th></tr>';
+      for (const [key, value] of formData.entries()) {
+        htmlTable += `<tr><td>${key}</td><td>${value}</td></tr>`;
+      }
+      htmlTable += '</table>';
+
+      // Display table on page
+      document.getElementById("output").innerHTML = htmlTable;
+
+      // Send as email using Gmail
+      const emailBody = htmlTable.replace(/<[^>]*>/g, ''); // Strip HTML tags for body
+      const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com&su=Sunday%20Offering%20Form&body=${encodeURIComponent(emailBody)}`;
       window.open(gmailLink, '_blank');
-
-
     });
   </script>
 </body>
