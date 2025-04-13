@@ -77,11 +77,14 @@
       document.getElementById(`checks_section${sectionIndex}`).appendChild(div);
     }
 
+    let cleanTextContent = "";
+
     document.getElementById("offeringForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
 
-      let htmlTable = '<h2>Submitted Form</h2>';
+      let htmlTable = '';
+      cleanTextContent = '';
       const fieldMap = {};
 
       for (const [key, value] of formData.entries()) {
@@ -95,54 +98,41 @@
         const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
         if (keys.length > 0) {
           htmlTable += `<h3>${section}</h3><table><tr><th>Field</th><th>Value</th></tr>`;
+          cleanTextContent += `${section}\n`;
           keys.forEach(key => {
             htmlTable += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+            cleanTextContent += `${key}: ${fieldMap[key].join(', ')}\n`;
           });
           htmlTable += '</table>';
+          cleanTextContent += '\n';
         }
       });
 
       const otherKeys = Object.keys(fieldMap).filter(k => !sections.some(s => k.startsWith(s)));
       if (otherKeys.length > 0) {
         htmlTable += `<h3>General Information</h3><table><tr><th>Field</th><th>Value</th></tr>`;
+        cleanTextContent += `General Information\n`;
         otherKeys.forEach(key => {
           htmlTable += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+          cleanTextContent += `${key}: ${fieldMap[key].join(', ')}\n`;
         });
         htmlTable += '</table>';
       }
 
       document.getElementById("output").innerHTML = htmlTable;
       document.getElementById("downloadPDF").style.display = "inline-block";
-
-      const emailSubject = 'Sunday Offering Form';
-      const emailBody = `<!DOCTYPE html><html><body>${htmlTable}</body></html>`;
-      const mailtoURL = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-
-      window.open(mailtoURL, '_blank');
     });
 
     document.getElementById("downloadPDF").addEventListener("click", function () {
-  const content = document.createElement("div");
-  const allTables = document.querySelectorAll("#output table");
-  const allHeadings = document.querySelectorAll("#output h3");
-
-  allHeadings.forEach((heading, index) => {
-    const title = document.createElement("h2");
-    title.textContent = heading.textContent;
-    content.appendChild(title);
-    content.appendChild(allTables[index].cloneNode(true));
-  });
-
-  const printWindow = window.open('', '', 'height=600,width=800');
-  printWindow.document.write('<html><head><title>Offering Summary</title><style>table, th, td { border: 1px solid black; border-collapse: collapse; padding: 8px; width: 100%; }</style></head><body>');
-  printWindow.document.write(content.innerHTML);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-  printWindow.close();
-});
-
+      const printWindow = window.open('', '', 'height=600,width=800');
+      printWindow.document.write('<html><head><title>Offering Summary</title><style>body{font-family:sans-serif;}table,th,td{border:1px solid black;border-collapse:collapse;padding:8px;width:100%;}</style></head><body>');
+      printWindow.document.write(document.getElementById("output").innerHTML);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    });
   </script>
 </body>
 </html>
