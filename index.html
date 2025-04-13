@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debre Mitmak Offering Form</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { margin-top: 30px; }
+    .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
+    .hidden { display: none; }
+    .entry { margin-bottom: 10px; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Debre Mitmak Saint Mary Offering Form</h1>
+
+  <form id="offeringForm">
+    <label>Date: <input type="date" name="date" required></label><br><br>
+    <label>Church Member Count: <input type="number" name="memberCount" required></label>
+
+    <div id="sections"></div>
+
+    <h2>Summary</h2>
+    <label>Total Cash Collected: $<input type="number" name="totalCash"></label><br>
+    <label>Total Check Collected: $<input type="number" name="totalChecks"></label><br>
+    <label>Grand Total Collected: $<input type="number" name="grandTotal"></label><br><br>
+
+    <label>Counted & Witnessed By: <input type="text" name="witness1"> and <input type="text" name="witness2"></label><br>
+    <label>Checked By Chairman/Secretary: <input type="text" name="checkedBy"></label><br>
+    <label>Accepted By Treasurer: <input type="text" name="treasurer"></label><br><br>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    const sections = [
+      "Offering and Memberships",
+      "Memorial and Answer to Individual Prayer",
+      "Rent",
+      "Christening Money",
+      "Candle",
+      "Gift Shop",
+      "Food & Beverage (Azeb)",
+      "From Fund Raising"
+    ];
+
+    const sectionsDiv = document.getElementById("sections");
+
+    sections.forEach((section, index) => {
+      const div = document.createElement("div");
+      div.classList.add("section");
+      div.innerHTML = `
+        <h2>${index + 1}. ${section}</h2>
+        <label>Cash: $<input type="number" name="section${index}_cash"></label>
+        <div id="checks_section${index}"></div>
+        <button type="button" onclick="addCheck(${index})">+ Add Check</button>
+        <hr>
+      `;
+      sectionsDiv.appendChild(div);
+    });
+
+    function addCheck(sectionIndex) {
+      const div = document.createElement("div");
+      div.classList.add("entry");
+      div.innerHTML = `
+        Check Amount: $<input type="number" name="section${sectionIndex}_checkAmount[]"> 
+        From: <input type="text" name="section${sectionIndex}_checkFrom[]">
+      `;
+      document.getElementById(`checks_section${sectionIndex}`).appendChild(div);
+    }
+
+    document.getElementById("offeringForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const emailBody = Array.from(formData.entries()).map(([key, val]) => `${key}: ${val}`).join("\n");
+      const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com &su=Sunday%20Offering%20Form&body=${encodeURIComponent(emailBody)}`;
+      window.open(gmailLink, '_blank');
+
+
+    });
+  </script>
+</body>
+</html>
