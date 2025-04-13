@@ -85,13 +85,14 @@
       }
       htmlTable += '</table>';
 
-      // Display table on page
       document.getElementById("output").innerHTML = htmlTable;
 
-      // Send as email using Gmail
-      const emailBody = htmlTable.replace(/<[^>]*>/g, ''); // Strip HTML tags for body
-      const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com&su=Sunday%20Offering%20Form&body=${encodeURIComponent(emailBody)}`;
-      window.open(gmailLink, '_blank');
+      // Send HTML table as email via Gmail (use body in HTML format)
+      const emailSubject = 'Sunday Offering Form';
+      const emailBody = `<!DOCTYPE html><html><body>${htmlTable}</body></html>`;
+      const mailtoURL = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
+      window.open(mailtoURL, '_blank');
     });
   </script>
 </body>
