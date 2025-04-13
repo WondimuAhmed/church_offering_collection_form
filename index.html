@@ -57,7 +57,7 @@
       div.classList.add("section");
       div.innerHTML = `
         <h2>${index + 1}. ${section}</h2>
-        <label>Cash: $<input type="number" name="section${index}_cash"></label>
+        <label>Cash: $<input type="number" name="${section} Cash"></label>
         <div id="checks_section${index}"></div>
         <button type="button" onclick="addCheck(${index})">+ Add Check</button>
         <hr>
@@ -66,11 +66,12 @@
     });
 
     function addCheck(sectionIndex) {
+      const sectionName = sections[sectionIndex];
       const div = document.createElement("div");
       div.classList.add("entry");
       div.innerHTML = `
-        Check Amount: $<input type="number" name="section${sectionIndex}_checkAmount[]"> 
-        From: <input type="text" name="section${sectionIndex}_checkFrom[]">
+        Check Amount: $<input type="number" name="${sectionName} Check Amount"> 
+        From: <input type="text" name="${sectionName} Check From">
       `;
       document.getElementById(`checks_section${sectionIndex}`).appendChild(div);
     }
@@ -79,15 +80,39 @@
       e.preventDefault();
       const formData = new FormData(this);
 
-      let htmlTable = '<h2>Submitted Form</h2><table><tr><th>Field</th><th>Value</th></tr>';
+      let htmlTable = '<h2>Submitted Form</h2>';
+      const fieldMap = {};
+
       for (const [key, value] of formData.entries()) {
-        htmlTable += `<tr><td>${key}</td><td>${value}</td></tr>`;
+        if (!fieldMap[key]) {
+          fieldMap[key] = [];
+        }
+        fieldMap[key].push(value);
       }
-      htmlTable += '</table>';
+
+      sections.forEach(section => {
+        const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
+        if (keys.length > 0) {
+          htmlTable += `<h3>${section}</h3><table><tr><th>Field</th><th>Value</th></tr>`;
+          keys.forEach(key => {
+            htmlTable += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+          });
+          htmlTable += '</table>';
+        }
+      });
+
+      // Include all non-section-specific fields
+      const otherKeys = Object.keys(fieldMap).filter(k => !sections.some(s => k.startsWith(s)));
+      if (otherKeys.length > 0) {
+        htmlTable += `<h3>General Information</h3><table><tr><th>Field</th><th>Value</th></tr>`;
+        otherKeys.forEach(key => {
+          htmlTable += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+        });
+        htmlTable += '</table>';
+      }
 
       document.getElementById("output").innerHTML = htmlTable;
 
-      // Send HTML table as email via Gmail (use body in HTML format)
       const emailSubject = 'Sunday Offering Form';
       const emailBody = `<!DOCTYPE html><html><body>${htmlTable}</body></html>`;
       const mailtoURL = `https://mail.google.com/mail/?view=cm&fs=1&to=saintmaryeotc921@gmail.com&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
