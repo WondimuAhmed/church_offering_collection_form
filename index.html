@@ -10,7 +10,7 @@
     .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
     .entry { margin-bottom: 10px; }
     button { margin-top: 10px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
     table, th, td { border: 1px solid black; }
     th, td { padding: 8px; text-align: left; }
   </style>
@@ -77,55 +77,55 @@
       document.getElementById(`checks_section${sectionIndex}`).appendChild(div);
     }
 
-    let cleanTextContent = "";
+    let printContent = "";
 
     document.getElementById("offeringForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
 
-      let htmlTable = '';
-      cleanTextContent = '';
+      let outputHTML = '';
+      printContent = '';
       const fieldMap = {};
 
       for (const [key, value] of formData.entries()) {
-        if (!fieldMap[key]) {
-          fieldMap[key] = [];
-        }
+        if (!fieldMap[key]) fieldMap[key] = [];
         fieldMap[key].push(value);
       }
 
       sections.forEach(section => {
         const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
         if (keys.length > 0) {
-          htmlTable += `<h3>${section}</h3><table><tr><th>Field</th><th>Value</th></tr>`;
-          cleanTextContent += `${section}\n`;
+          outputHTML += `<strong>${section}</strong>`;
+          outputHTML += '<table><tr><th>Field</th><th>Value</th></tr>';
+          printContent += `${section}\n`;
           keys.forEach(key => {
-            htmlTable += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
-            cleanTextContent += `${key}: ${fieldMap[key].join(', ')}\n`;
+            outputHTML += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+            printContent += `${key}: ${fieldMap[key].join(', ')}\n`;
           });
-          htmlTable += '</table>';
-          cleanTextContent += '\n';
+          outputHTML += '</table><br>';
+          printContent += '\n';
         }
       });
 
       const otherKeys = Object.keys(fieldMap).filter(k => !sections.some(s => k.startsWith(s)));
       if (otherKeys.length > 0) {
-        htmlTable += `<h3>General Information</h3><table><tr><th>Field</th><th>Value</th></tr>`;
-        cleanTextContent += `General Information\n`;
+        outputHTML += `<strong>General Information</strong>`;
+        outputHTML += '<table><tr><th>Field</th><th>Value</th></tr>';
+        printContent += `General Information\n`;
         otherKeys.forEach(key => {
-          htmlTable += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
-          cleanTextContent += `${key}: ${fieldMap[key].join(', ')}\n`;
+          outputHTML += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+          printContent += `${key}: ${fieldMap[key].join(', ')}\n`;
         });
-        htmlTable += '</table>';
+        outputHTML += '</table>';
       }
 
-      document.getElementById("output").innerHTML = htmlTable;
+      document.getElementById("output").innerHTML = outputHTML;
       document.getElementById("downloadPDF").style.display = "inline-block";
     });
 
     document.getElementById("downloadPDF").addEventListener("click", function () {
-      const printWindow = window.open('', '', 'height=600,width=800');
-      printWindow.document.write('<html><head><title>Offering Summary</title><style>body{font-family:sans-serif;}table,th,td{border:1px solid black;border-collapse:collapse;padding:8px;width:100%;}</style></head><body>');
+      const printWindow = window.open('', '', 'height=700,width=900');
+      printWindow.document.write('<html><head><title>Offering Summary</title><style>body{font-family:sans-serif;}strong{display:block;margin-top:20px;font-size:18px;}table,th,td{border:1px solid black;border-collapse:collapse;padding:8px;width:100%;}</style></head><body>');
       printWindow.document.write(document.getElementById("output").innerHTML);
       printWindow.document.write('</body></html>');
       printWindow.document.close();
