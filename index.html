@@ -143,62 +143,76 @@
         outputHTML += '</table>';
       }
 
-      document.getElementById("output").innerHTML = outputHTML;
-      document.getElementById("downloadPDF").style.display = "inline-block";
-
       document.getElementById("downloadPDF").onclick = function () {
-        const jsPDF = window.jspdf.jsPDF;
-        const doc = new jsPDF();
-        const outputElement = document.getElementById("output");
-        const sections = outputElement.querySelectorAll("strong");
-        const tables = outputElement.querySelectorAll("table");
+  const jsPDF = window.jspdf.jsPDF;
+  const doc = new jsPDF();
+  const outputElement = document.getElementById("output");
+  const sections = outputElement.querySelectorAll("strong");
+  const tables = outputElement.querySelectorAll("table");
 
-        let y = 15;
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        const title = "Debre Mitmak Saint Mary Offering Summary";
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const textWidth = doc.getTextWidth(title);
-        const centerX = (pageWidth - textWidth) / 2;
-        doc.text(title, centerX, y);
-        doc.setFont(undefined, 'normal');
-        y += 10;
+  let y = 15;
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  const title = "Debre Mitmak Saint Mary Offering Summary";
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const textWidth = doc.getTextWidth(title);
+  const centerX = (pageWidth - textWidth) / 2;
+  doc.text(title, centerX, y);
+  doc.setFont(undefined, 'normal');
+  y += 10;
 
-        tables.forEach((table, index) => {
-          const heading = sections[index]?.textContent || '';
-          const rows = Array.from(table.querySelectorAll("tr"));
-          const body = rows.slice(1).map(row => Array.from(row.querySelectorAll("td")).map(td => td.textContent));
+  tables.forEach((table, index) => {
+    const heading = sections[index]?.textContent || '';
+    const rows = Array.from(table.querySelectorAll("tr"));
+    const body = rows.slice(1).map(row => Array.from(row.querySelectorAll("td")).map(td => td.textContent));
 
-          doc.autoTable({
-            startY: y,
-            head: [["Type", "Amount ($)", "From"]],
-            body: body,
-            styles: { fontSize: 10 },
-            margin: { left: 14, right: 14 },
-            theme: 'grid',
-            headStyles: { fillColor: [41, 128, 185] },
-            didDrawPage: function (data) {
-              y = data.cursor.y + 10;
-            },
-            didDrawCell: function (data) {
-              if (data.row.index === 0 && data.column.index === 0) {
-                doc.setFont(undefined, 'bold');
-                doc.text(heading, data.settings.margin.left, data.row.y - 5);
-                doc.setFont(undefined, 'normal');
-              }
-            }
-          });
-        });
-
-        const now = new Date();
-        const timestamp = now.toLocaleString();
-        doc.setFontSize(10);
-        doc.text(`Generated on ${timestamp}`, 14, 285);
-
-        const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
-        doc.save(filename);
-      };
+    doc.autoTable({
+      startY: y,
+      head: [["Type", "Amount ($)", "From"]],
+      body: body,
+      styles: { fontSize: 10 },
+      margin: { left: 14, right: 14 },
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185] },
+      didDrawPage: function (data) {
+        y = data.cursor.y + 10;
+      },
+      didDrawCell: function (data) {
+        if (data.row.index === 0 && data.column.index === 0) {
+          doc.setFont(undefined, 'bold');
+          doc.text(heading, data.settings.margin.left, data.row.y - 5);
+          doc.setFont(undefined, 'normal');
+        }
+      }
     });
-  </script>
+  });
+
+  // Add Summary Section
+  const totalCash = document.getElementById("totalCash").value;
+  const totalChecks = document.getElementById("totalChecks").value;
+  const grandTotal = document.getElementById("grandTotal").value;
+
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text("Summary", 14, y);
+  doc.setFont(undefined, 'normal');
+  y += 7;
+  doc.text(`Total Cash Collected: $${totalCash}`, 14, y);
+  y += 6;
+  doc.text(`Total Check Collected: $${totalChecks}`, 14, y);
+  y += 6;
+  doc.text(`Grand Total Collected: $${grandTotal}`, 14, y);
+  y += 10;
+
+  // Footer timestamp
+  const now = new Date();
+  const timestamp = now.toLocaleString();
+  doc.setFontSize(10);
+  doc.text(`Generated on ${timestamp}`, 14, 285);
+
+  const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
+  doc.save(filename);
+};
+ </script>
 </body>
 </html>
