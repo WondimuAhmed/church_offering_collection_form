@@ -146,53 +146,59 @@
       document.getElementById("output").innerHTML = outputHTML;
       document.getElementById("downloadPDF").style.display = "inline-block";
 
+      document.getElementById("downloadPDF").onclick = function () {
+        const jsPDF = window.jspdf.jsPDF;
+        const doc = new jsPDF();
+        const outputElement = document.getElementById("output");
+        const sections = outputElement.querySelectorAll("strong");
+        const tables = outputElement.querySelectorAll("table");
 
-document.getElementById("downloadPDF").addEventListener("click", function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const now = new Date();
-      const timestamp = now.toLocaleString();
-      const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
+        let y = 15;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        const title = "Debre Mitmak Saint Mary Offering Summary";
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const textWidth = doc.getTextWidth(title);
+        const centerX = (pageWidth - textWidth) / 2;
+        doc.text(title, centerX, y);
+        doc.setFont(undefined, 'normal');
+        y += 10;
 
-      doc.setFontSize(12);
-      doc.text("Debre Mitmak Saint Mary Offering Summary", 14, 15);
-      let y = 25;
+        tables.forEach((table, index) => {
+          const heading = sections[index]?.textContent || '';
+          const rows = Array.from(table.querySelectorAll("tr"));
+          const body = rows.slice(1).map(row => Array.from(row.querySelectorAll("td")).map(td => td.textContent));
 
-      const outputElement = document.getElementById("output");
-      const tables = outputElement.querySelectorAll("table");
-      const titles = outputElement.querySelectorAll("strong");
-
-      tables.forEach((table, index) => {
-        const sectionTitle = titles[index]?.textContent || "";
-        const rows = Array.from(table.rows);
-        const body = rows.map(row => [row.cells[0].textContent, row.cells[1].textContent]);
-
-        doc.autoTable({
-          startY: y,
-          head: [[sectionTitle, ""]],
-          body: body,
-          styles: { fontSize: 10 },
-          margin: { left: 14, right: 14 },
-          theme: 'grid',
-          didDrawPage: function (data) {
-            y = data.cursor.y + 10;
-          }
+          doc.autoTable({
+            startY: y,
+            head: [["Type", "Amount ($)", "From"]],
+            body: body,
+            styles: { fontSize: 10 },
+            margin: { left: 14, right: 14 },
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185] },
+            didDrawPage: function (data) {
+              y = data.cursor.y + 10;
+            },
+            didDrawCell: function (data) {
+              if (data.row.index === 0 && data.column.index === 0) {
+                doc.setFont(undefined, 'bold');
+                doc.text(heading, data.settings.margin.left, data.row.y - 5);
+                doc.setFont(undefined, 'normal');
+              }
+            }
+          });
         });
 
-        if (y > 260) {
-          doc.addPage();
-          y = 25;
-        }
-      });
+        const now = new Date();
+        const timestamp = now.toLocaleString();
+        doc.setFontSize(10);
+        doc.text(`Generated on ${timestamp}`, 14, 285);
 
-      doc.setFontSize(10);
-      doc.text(`Generated on ${timestamp}`, 14, 285);
-      doc.save(filename);
+        const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+      };
     });
   </script>
 </body>
 </html>
-
-      
-
-      
