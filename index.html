@@ -169,9 +169,11 @@
           const rows = Array.from(table.querySelectorAll("tr"));
           const body = rows.slice(1).map(row => Array.from(row.querySelectorAll("td")).map(td => td.textContent));
 
+          const headerRow = rows[0] ? Array.from(rows[0].querySelectorAll("th")).map(th => th.textContent) : ["Type", "Amount ($)", "From"];
+
           doc.autoTable({
             startY: y,
-            head: [["Type", "Amount ($)", "From"]],
+            head: [headerRow],
             body: body,
             styles: { fontSize: 10 },
             margin: { left: 14, right: 14 },
@@ -188,6 +190,22 @@
               }
             }
           });
+        });
+
+        y += 10;
+        doc.autoTable({
+          startY: y,
+          head: [["Total Summary", "Amount ($)"]],
+          body: [
+            ["Total Cash", document.getElementById("totalCash").value],
+            ["Total Checks", document.getElementById("totalChecks").value],
+            ["Grand Total", document.getElementById("grandTotal").value]
+          ],
+          styles: { fontSize: 10 },
+          margin: { left: 14, right: 14 },
+          theme: 'grid',
+          headStyles: { fillColor: [41, 128, 185] }
+        });
         });
 
         const now = new Date();
