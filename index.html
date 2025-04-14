@@ -39,6 +39,8 @@
   <button id="downloadPDF" style="display:none;">Download PDF</button>
   <div id="output"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <script>
     const sections = [
       "Offering and Memberships",
@@ -126,40 +128,40 @@
       const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
 
       doc.setFontSize(12);
-      doc.text("Debre Mitmak Saint Mary Offering Summary", 10, 10);
+      doc.text("Debre Mitmak Saint Mary Offering Summary", 14, 15);
+      let y = 25;
 
       const outputElement = document.getElementById("output");
       const tables = outputElement.querySelectorAll("table");
       const titles = outputElement.querySelectorAll("strong");
 
-      let y = 20;
       tables.forEach((table, index) => {
-        const title = titles[index]?.textContent || "";
-        doc.setFont(undefined, 'bold');
-        doc.text(title, 10, y);
-        y += 6;
+        const sectionTitle = titles[index]?.textContent || "";
+        const rows = Array.from(table.rows).slice(1); // skip header row
+        const body = rows.map(row => [row.cells[0].textContent, row.cells[1].textContent]);
 
-        const rows = Array.from(table.rows);
-        doc.setFont(undefined, 'normal');
-        rows.forEach(row => {
-          const cells = row.cells;
-          let text = `${cells[0].textContent}: ${cells[1].textContent}`;
-          doc.text(text, 10, y);
-          y += 6;
+        doc.autoTable({
+          startY: y,
+          head: [[sectionTitle, ""]],
+          body: [["Field", "Value"], ...body],
+          styles: { fontSize: 10 },
+          margin: { left: 14, right: 14 },
+          theme: 'grid',
+          didDrawPage: function (data) {
+            y = data.cursor.y + 10;
+          }
         });
 
-        y += 4;
-        if (y > 270) {
+        if (y > 260) {
           doc.addPage();
-          y = 20;
+          y = 25;
         }
       });
 
       doc.setFontSize(10);
-      doc.text(`Generated on ${timestamp}`, 10, 285);
+      doc.text(`Generated on ${timestamp}`, 14, 285);
       doc.save(filename);
     });
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
