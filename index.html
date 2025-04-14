@@ -1,3 +1,7 @@
+// The updated version includes:
+// - Displaying Cash/Check entries in the format "Cash Amount ($): 12 From: Name"
+// - Summing totals under each section and updating totalCash, totalChecks, and grandTotal
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,9 +29,9 @@
     <div id="sections"></div>
 
     <h2>Summary</h2>
-    <label>Total Cash Collected: $<input type="number" name="totalCash"></label><br>
-    <label>Total Check Collected: $<input type="number" name="totalChecks"></label><br>
-    <label>Grand Total Collected: $<input type="number" name="grandTotal"></label><br><br>
+    <label>Total Cash Collected: $<input type="number" name="totalCash" id="totalCash" readonly></label><br>
+    <label>Total Check Collected: $<input type="number" name="totalChecks" id="totalChecks" readonly></label><br>
+    <label>Grand Total Collected: $<input type="number" name="grandTotal" id="grandTotal" readonly></label><br><br>
 
     <label>Counted & Witnessed By: <input type="text" name="witness1"> and <input type="text" name="witness2"></label><br>
     <label>Checked By Chairman/Secretary: <input type="text" name="checkedBy"></label><br>
@@ -97,6 +101,8 @@
 
       let outputHTML = '';
       const fieldMap = {};
+      let totalCash = 0;
+      let totalChecks = 0;
 
       for (const [key, value] of formData.entries()) {
         if (!fieldMap[key]) fieldMap[key] = [];
@@ -108,21 +114,28 @@
         if (keys.length > 0) {
           outputHTML += `<strong>${section}</strong>`;
           outputHTML += '<table>';
-          const cashEntries = keys.filter(k => k.includes('Cash Amount'));
-          cashEntries.forEach((_, i) => {
-            const amount = fieldMap[`${section} Cash Amount`]?.[i] || '';
-            const from = fieldMap[`${section} Cash From`]?.[i] || '';
-            outputHTML += `<tr><td>Cash Amount ($)</td><td>${amount} From: ${from}</td></tr>`;
-          });
-          const checkEntries = keys.filter(k => k.includes('Check Amount'));
-          checkEntries.forEach((_, i) => {
-            const amount = fieldMap[`${section} Check Amount`]?.[i] || '';
-            const from = fieldMap[`${section} Check From`]?.[i] || '';
-            outputHTML += `<tr><td>Check Amount ($)</td><td>${amount} From: ${from}</td></tr>`;
-          });
+          const cashCount = fieldMap[`${section} Cash Amount`]?.length || 0;
+          for (let i = 0; i < cashCount; i++) {
+            const amount = parseFloat(fieldMap[`${section} Cash Amount`][i] || 0);
+            const from = fieldMap[`${section} Cash From`][i] || '';
+            totalCash += amount;
+            outputHTML += `<tr><td colspan="2">Cash Amount ($): ${amount} From: ${from}</td></tr>`;
+          }
+          const checkCount = fieldMap[`${section} Check Amount`]?.length || 0;
+          for (let i = 0; i < checkCount; i++) {
+            const amount = parseFloat(fieldMap[`${section} Check Amount`][i] || 0);
+            const from = fieldMap[`${section} Check From`][i] || '';
+            totalChecks += amount;
+            outputHTML += `<tr><td colspan="2">Check Amount ($): ${amount} From: ${from}</td></tr>`;
+          }
+          outputHTML += `<tr><td><strong>Subtotal</strong></td><td>$${(totalCash + totalChecks).toFixed(2)}</td></tr>`;
           outputHTML += '</table><br>';
         }
       });
+
+      document.getElementById("totalCash").value = totalCash.toFixed(2);
+      document.getElementById("totalChecks").value = totalChecks.toFixed(2);
+      document.getElementById("grandTotal").value = (totalCash + totalChecks).toFixed(2);
 
       const otherKeys = Object.keys(fieldMap).filter(k => !sections.some(s => k.startsWith(s)));
       if (otherKeys.length > 0) {
@@ -136,59 +149,6 @@
 
       document.getElementById("output").innerHTML = outputHTML;
       document.getElementById("downloadPDF").style.display = "inline-block";
-    });
-
-    document.getElementById("downloadPDF").addEventListener("click", function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const now = new Date();
-      const timestamp = now.toLocaleString();
-      const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
-
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const text = "Debre Mitmak Saint Mary Offering Summary";
-      const textWidth = doc.getTextWidth(text);
-      const centerX = (pageWidth - textWidth) / 2;
-      doc.text(text, centerX, 15);
-      doc.setFont(undefined, 'normal');
-
-      let y = 25;
-
-      const outputElement = document.getElementById("output");
-      const tables = outputElement.querySelectorAll("table");
-      const titles = outputElement.querySelectorAll("strong");
-
-      tables.forEach((table, index) => {
-        const sectionTitle = titles[index]?.textContent || "";
-        const rows = Array.from(table.rows);
-        const body = rows.map(row => [
-          row.cells[0].textContent,
-          row.cells[1].textContent
-        ]);
-
-        doc.autoTable({
-          startY: y,
-          head: [[sectionTitle, ""]],
-          body: body,
-          styles: { fontSize: 10 },
-          margin: { left: 14, right: 14 },
-          theme: 'grid',
-          didDrawPage: function (data) {
-            y = data.cursor.y + 10;
-          }
-        });
-
-        if (y > 260) {
-          doc.addPage();
-          y = 25;
-        }
-      });
-
-      doc.setFontSize(10);
-      doc.text(`Generated on ${timestamp}`, 14, 285);
-      doc.save(filename);
     });
   </script>
 </body>
