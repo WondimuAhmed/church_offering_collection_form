@@ -60,13 +60,25 @@
       div.classList.add("section");
       div.innerHTML = `
         <h2>${index + 1}. ${section}</h2>
-        <label>Cash: $<input type="number" name="${section} Cash"></label>
+        <div id="cash_section${index}"></div>
+        <button type="button" onclick="addCash(${index})">+ Add Cash</button><br><br>
         <div id="checks_section${index}"></div>
         <button type="button" onclick="addCheck(${index})">+ Add Check</button>
         <hr>
       `;
       sectionsDiv.appendChild(div);
     });
+
+    function addCash(sectionIndex) {
+      const sectionName = sections[sectionIndex];
+      const div = document.createElement("div");
+      div.classList.add("entry");
+      div.innerHTML = `
+        Cash Amount: $<input type="number" name="${sectionName} Cash Amount"> 
+        From: <input type="text" name="${sectionName} Cash From">
+      `;
+      document.getElementById(`cash_section${sectionIndex}`).appendChild(div);
+    }
 
     function addCheck(sectionIndex) {
       const sectionName = sections[sectionIndex];
@@ -96,11 +108,17 @@
         if (keys.length > 0) {
           outputHTML += `<strong>${section}</strong>`;
           outputHTML += '<table>';
-          keys.forEach(key => {
-            let shortLabel = key.replace(section + ' ', '').replace('Check From', 'From');
-            if (shortLabel.includes('Cash')) shortLabel = 'Cash ($)';
-            if (shortLabel.includes('Check Amount')) shortLabel = 'Check Amount ($)';
-            outputHTML += `<tr><td>${shortLabel}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+          const cashEntries = keys.filter(k => k.includes('Cash Amount'));
+          cashEntries.forEach((_, i) => {
+            const amount = fieldMap[`${section} Cash Amount`]?.[i] || '';
+            const from = fieldMap[`${section} Cash From`]?.[i] || '';
+            outputHTML += `<tr><td>Cash Amount ($)</td><td>${amount} From: ${from}</td></tr>`;
+          });
+          const checkEntries = keys.filter(k => k.includes('Check Amount'));
+          checkEntries.forEach((_, i) => {
+            const amount = fieldMap[`${section} Check Amount`]?.[i] || '';
+            const from = fieldMap[`${section} Check From`]?.[i] || '';
+            outputHTML += `<tr><td>Check Amount ($)</td><td>${amount} From: ${from}</td></tr>`;
           });
           outputHTML += '</table><br>';
         }
@@ -135,7 +153,7 @@
       const centerX = (pageWidth - textWidth) / 2;
       doc.text(text, centerX, 15);
       doc.setFont(undefined, 'normal');
-      
+
       let y = 25;
 
       const outputElement = document.getElementById("output");
@@ -175,4 +193,3 @@
   </script>
 </body>
 </html>
-
