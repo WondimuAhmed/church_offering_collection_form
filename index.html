@@ -53,6 +53,12 @@
       "From Fund Raising"
     ];
 
+    const labelMap = {
+      'Cash': 'Cash',
+      'Check Amount': 'Check Amount',
+      'Check From': 'From',
+    };
+
     const sectionsDiv = document.getElementById("sections");
 
     sections.forEach((section, index) => {
@@ -79,14 +85,11 @@
       document.getElementById(`checks_section${sectionIndex}`).appendChild(div);
     }
 
-    let printContent = "";
-
     document.getElementById("offeringForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const formData = new FormData(this);
 
       let outputHTML = '';
-      printContent = '';
       const fieldMap = {};
 
       for (const [key, value] of formData.entries()) {
@@ -98,9 +101,10 @@
         const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
         if (keys.length > 0) {
           outputHTML += `<strong>${section}</strong>`;
-          outputHTML += '<table><tr><th>Field</th><th>Value</th></tr>';
+          outputHTML += '<table>';
           keys.forEach(key => {
-            outputHTML += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
+            const shortLabel = key.replace(section + ' ', '').replace('Check From', 'From');
+            outputHTML += `<tr><td>${shortLabel}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
           });
           outputHTML += '</table><br>';
         }
@@ -109,7 +113,7 @@
       const otherKeys = Object.keys(fieldMap).filter(k => !sections.some(s => k.startsWith(s)));
       if (otherKeys.length > 0) {
         outputHTML += `<strong>General Information</strong>`;
-        outputHTML += '<table><tr><th>Field</th><th>Value</th></tr>';
+        outputHTML += '<table>';
         otherKeys.forEach(key => {
           outputHTML += `<tr><td>${key}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
         });
@@ -137,13 +141,13 @@
 
       tables.forEach((table, index) => {
         const sectionTitle = titles[index]?.textContent || "";
-        const rows = Array.from(table.rows).slice(1); // skip header row
+        const rows = Array.from(table.rows);
         const body = rows.map(row => [row.cells[0].textContent, row.cells[1].textContent]);
 
         doc.autoTable({
           startY: y,
           head: [[sectionTitle, ""]],
-          body: [["Field", "Value"], ...body],
+          body: body,
           styles: { fontSize: 10 },
           margin: { left: 14, right: 14 },
           theme: 'grid',
