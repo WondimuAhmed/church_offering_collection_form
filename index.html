@@ -13,6 +13,7 @@
     table { border-collapse: collapse; width: 100%; margin-top: 10px; }
     table, th, td { border: 1px solid black; }
     th, td { padding: 8px; text-align: left; }
+    #output strong { font-size: 16px; background-color: #f0f0f0; display: block; padding: 6px 10px; margin-top: 20px; border-left: 4px solid #999; }
   </style>
 </head>
 <body>
@@ -110,23 +111,22 @@
       sections.forEach(section => {
         const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
         if (keys.length > 0) {
-          outputHTML += `<div style='font-size: 16px; font-weight: bold; margin-top: 20px; background-color: #f0f0f0; padding: 6px 10px; border-left: 4px solid #999;'>${section}</div>`;
+          outputHTML += `<strong>${section}</strong>`;
           outputHTML += '<table><tr><th>Type</th><th>Amount ($)</th><th>From</th></tr>';
           const cashCount = fieldMap[`${section} Cash Amount`]?.length || 0;
           for (let i = 0; i < cashCount; i++) {
             const amount = parseFloat(fieldMap[`${section} Cash Amount`][i] || 0);
             const from = fieldMap[`${section} Cash From`][i] || '';
             totalCash += amount;
-            outputHTML += `<tr><td>Cash</td><td>${amount}</td><td>${from}</td></tr>`;
+            outputHTML += `<tr><td>Cash</td><td>$${amount.toFixed(2)}</td><td>From: ${from}</td></tr>`;
           }
           const checkCount = fieldMap[`${section} Check Amount`]?.length || 0;
           for (let i = 0; i < checkCount; i++) {
             const amount = parseFloat(fieldMap[`${section} Check Amount`][i] || 0);
             const from = fieldMap[`${section} Check From`][i] || '';
             totalChecks += amount;
-            outputHTML += `<tr><td>Check</td><td>${amount}</td><td>${from}</td></tr>`;
+            outputHTML += `<tr><td>Check</td><td>$${amount.toFixed(2)}</td><td>From: ${from}</td></tr>`;
           }
-          outputHTML += `<tr><td colspan="2"><strong>Subtotal</strong></td><td>$${(totalCash + totalChecks).toFixed(2)}</td></tr>`;
           outputHTML += '</table><br>';
         }
       });
@@ -169,27 +169,38 @@
       tables.forEach((table, index) => {
         const heading = sections[index]?.textContent || '';
         const rows = Array.from(table.querySelectorAll("tr"));
-        const body = rows.slice(1).map(row => Array.from(row.querySelectorAll("td")).map(td => td.textContent));
-
-        doc.autoTable({
-          startY: y,
-          head: [["Type", "Amount ($)", "From"]],
-          body: body,
-          styles: { fontSize: 10 },
-          margin: { left: 14, right: 14 },
-          theme: 'grid',
-          headStyles: { fillColor: [41, 128, 185] },
-          didDrawPage: function (data) {
-            y = data.cursor.y + 10;
-          },
-          didDrawCell: function (data) {
-            if (data.row.index === 0 && data.column.index === 0) {
-              doc.setFont(undefined, 'bold');
-              doc.text(heading, data.settings.margin.left, data.row.y - 5);
-              doc.setFont(undefined, 'normal');
-            }
+        const body = rows.slice(1).map(row => {
+          const cells = Array.from(row.querySelectorAll("td")).map(td => td.textContent);
+          if (cells.length === 3) {
+            const type = cells[0];
+            const amount = cells[1];
+            const from = cells[2];
+            return [type, amount, from];
           }
+          return [];
         });
+
+        if (body.length > 0) {
+          doc.autoTable({
+            startY: y,
+            head: [["Type", "Amount ($)", "From"]],
+            body: body,
+            styles: { fontSize: 10 },
+            margin: { left: 14, right: 14 },
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185] },
+            didDrawPage: function (data) {
+              y = data.cursor.y + 10;
+            },
+            didDrawCell: function (data) {
+              if (data.row.index === 0 && data.column.index === 0) {
+                doc.setFont(undefined, 'bold');
+                doc.text(heading, data.settings.margin.left, data.row.y - 5);
+                doc.setFont(undefined, 'normal');
+              }
+            }
+          });
+        }
       });
 
       // Add Summary
@@ -209,7 +220,7 @@
       doc.text(`Grand Total Collected: $${grandTotal}`, 14, y);
       y += 10;
 
-      // Timestamp
+      // Footer timestamp
       const now = new Date();
       const timestamp = now.toLocaleString();
       doc.setFontSize(10);
