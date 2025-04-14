@@ -174,12 +174,11 @@
           if (cells.length === 3) {
             const type = cells[0];
             const amount = cells[1];
-            const from = cells[2];
+               const from = cells[2]; 
             return [type, amount, from];
           }
           return [];
         });
-
         if (body.length > 0) {
           doc.autoTable({
             startY: y,
