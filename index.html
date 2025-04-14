@@ -53,12 +53,6 @@
       "From Fund Raising"
     ];
 
-    const labelMap = {
-      'Cash': 'Cash',
-      'Check Amount': 'Check Amount',
-      'Check From': 'From',
-    };
-
     const sectionsDiv = document.getElementById("sections");
 
     sections.forEach((section, index) => {
@@ -103,7 +97,9 @@
           outputHTML += `<strong>${section}</strong>`;
           outputHTML += '<table>';
           keys.forEach(key => {
-            const shortLabel = key.replace(section + ' ', '').replace('Check From', 'From');
+            let shortLabel = key.replace(section + ' ', '').replace('Check From', 'From');
+            if (shortLabel.includes('Cash')) shortLabel = 'Cash ($)';
+            if (shortLabel.includes('Check Amount')) shortLabel = 'Check Amount ($)';
             outputHTML += `<tr><td>${shortLabel}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
           });
           outputHTML += '</table><br>';
@@ -131,8 +127,16 @@
       const timestamp = now.toLocaleString();
       const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
 
-      doc.setFontSize(12);
-      doc.text("Debre Mitmak Saint Mary Offering Summary", 14, 15);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const text = "Debre Mitmak Saint Mary Offering Summary";
+      const textWidth = doc.getTextWidth(text);
+      const centerX = (pageWidth - textWidth) / 2;
+      doc.text(text, centerX, 15);
+      doc.setFont(undefined, 'normal');
+      const imageUrl = '/mnt/data/mary.png';
+      doc.addImage(imageUrl, 'PNG', pageWidth - 40, 8, 20, 20);
       let y = 25;
 
       const outputElement = document.getElementById("output");
@@ -142,7 +146,10 @@
       tables.forEach((table, index) => {
         const sectionTitle = titles[index]?.textContent || "";
         const rows = Array.from(table.rows);
-        const body = rows.map(row => [row.cells[0].textContent, row.cells[1].textContent]);
+        const body = rows.map(row => [
+          row.cells[0].textContent,
+          row.cells[1].textContent
+        ]);
 
         doc.autoTable({
           startY: y,
