@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>Debre Mitmak Saint Mary Offering Form</h1>
+  <h1 style="text-align: center; background-color: #e0e0e0; padding: 10px; border-radius: 8px; border: 2px solid #999;">Debre Mitmak Saint Mary Offering Form</h1>
 
   <form id="offeringForm">
     <label>Date: <input type="date" name="date" required></label><br><br>
@@ -108,7 +108,7 @@
       sections.forEach(section => {
         const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
         if (keys.length > 0) {
-          outputHTML += `<strong>${section}</strong>`;
+          outputHTML += `<div style='font-size: 16px; font-weight: bold; margin-top: 20px; background-color: #f0f0f0; padding: 6px 10px; border-left: 4px solid #999;'>${section}</div>`;
           outputHTML += '<table><tr><th>Type</th><th>Amount ($)</th><th>From</th></tr>';
           const cashCount = fieldMap[`${section} Cash Amount`]?.length || 0;
           for (let i = 0; i < cashCount; i++) {
@@ -202,4 +202,3 @@
   </script>
 </body>
 </html>
-
