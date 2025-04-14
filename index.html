@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>Debre Mitmak Saint Mary Offering Form</h1>
+  <h1 style="text-align: center; background-color: #e0e0e0; padding: 10px; border-radius: 8px; border: 2px solid #999;">Debre Mitmak Saint Mary Offering Form</h1>
 
   <form id="offeringForm">
     <label>Date: <input type="date" name="date" required></label><br><br>
@@ -25,9 +25,9 @@
     <div id="sections"></div>
 
     <h2>Summary</h2>
-    <label>Total Cash Collected: $<input type="number" name="totalCash"></label><br>
-    <label>Total Check Collected: $<input type="number" name="totalChecks"></label><br>
-    <label>Grand Total Collected: $<input type="number" name="grandTotal"></label><br><br>
+    <label>Total Cash Collected: $<input type="number" name="totalCash" id="totalCash" readonly></label><br>
+    <label>Total Check Collected: $<input type="number" name="totalChecks" id="totalChecks" readonly></label><br>
+    <label>Grand Total Collected: $<input type="number" name="grandTotal" id="grandTotal" readonly></label><br><br>
 
     <label>Counted & Witnessed By: <input type="text" name="witness1"> and <input type="text" name="witness2"></label><br>
     <label>Checked By Chairman/Secretary: <input type="text" name="checkedBy"></label><br>
@@ -53,12 +53,6 @@
       "From Fund Raising"
     ];
 
-    const labelMap = {
-      'Cash': 'Cash',
-      'Check Amount': 'Check Amount',
-      'Check From': 'From',
-    };
-
     const sectionsDiv = document.getElementById("sections");
 
     sections.forEach((section, index) => {
@@ -66,13 +60,25 @@
       div.classList.add("section");
       div.innerHTML = `
         <h2>${index + 1}. ${section}</h2>
-        <label>Cash: $<input type="number" name="${section} Cash"></label>
+        <div id="cash_section${index}"></div>
+        <button type="button" onclick="addCash(${index})">+ Add Cash</button><br><br>
         <div id="checks_section${index}"></div>
         <button type="button" onclick="addCheck(${index})">+ Add Check</button>
         <hr>
       `;
       sectionsDiv.appendChild(div);
     });
+
+    function addCash(sectionIndex) {
+      const sectionName = sections[sectionIndex];
+      const div = document.createElement("div");
+      div.classList.add("entry");
+      div.innerHTML = `
+        Cash Amount: $<input type="number" name="${sectionName} Cash Amount"> 
+        From: <input type="text" name="${sectionName} Cash From">
+      `;
+      document.getElementById(`cash_section${sectionIndex}`).appendChild(div);
+    }
 
     function addCheck(sectionIndex) {
       const sectionName = sections[sectionIndex];
@@ -91,6 +97,8 @@
 
       let outputHTML = '';
       const fieldMap = {};
+      let totalCash = 0;
+      let totalChecks = 0;
 
       for (const [key, value] of formData.entries()) {
         if (!fieldMap[key]) fieldMap[key] = [];
@@ -100,15 +108,30 @@
       sections.forEach(section => {
         const keys = Object.keys(fieldMap).filter(k => k.startsWith(section));
         if (keys.length > 0) {
-          outputHTML += `<strong>${section}</strong>`;
-          outputHTML += '<table>';
-          keys.forEach(key => {
-            const shortLabel = key.replace(section + ' ', '').replace('Check From', 'From');
-            outputHTML += `<tr><td>${shortLabel}</td><td>${fieldMap[key].join('<br>')}</td></tr>`;
-          });
+          outputHTML += `<div style='font-size: 16px; font-weight: bold; margin-top: 20px; background-color: #f0f0f0; padding: 6px 10px; border-left: 4px solid #999;'>${section}</div>`;
+          outputHTML += '<table><tr><th>Type</th><th>Amount ($)</th><th>From</th></tr>';
+          const cashCount = fieldMap[`${section} Cash Amount`]?.length || 0;
+          for (let i = 0; i < cashCount; i++) {
+            const amount = parseFloat(fieldMap[`${section} Cash Amount`][i] || 0);
+            const from = fieldMap[`${section} Cash From`][i] || '';
+            totalCash += amount;
+            outputHTML += `<tr><td>Cash</td><td>${amount}</td><td>${from}</td></tr>`;
+          }
+          const checkCount = fieldMap[`${section} Check Amount`]?.length || 0;
+          for (let i = 0; i < checkCount; i++) {
+            const amount = parseFloat(fieldMap[`${section} Check Amount`][i] || 0);
+            const from = fieldMap[`${section} Check From`][i] || '';
+            totalChecks += amount;
+            outputHTML += `<tr><td>Check</td><td>${amount}</td><td>${from}</td></tr>`;
+          }
+          outputHTML += `<tr><td colspan="2"><strong>Subtotal</strong></td><td>$${(totalCash + totalChecks).toFixed(2)}</td></tr>`;
           outputHTML += '</table><br>';
         }
       });
+
+      document.getElementById("totalCash").value = totalCash.toFixed(2);
+      document.getElementById("totalChecks").value = totalChecks.toFixed(2);
+      document.getElementById("grandTotal").value = (totalCash + totalChecks).toFixed(2);
 
       const otherKeys = Object.keys(fieldMap).filter(k => !sections.some(s => k.startsWith(s)));
       if (otherKeys.length > 0) {
@@ -122,49 +145,59 @@
 
       document.getElementById("output").innerHTML = outputHTML;
       document.getElementById("downloadPDF").style.display = "inline-block";
-    });
 
-    document.getElementById("downloadPDF").addEventListener("click", function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const now = new Date();
-      const timestamp = now.toLocaleString();
-      const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
+      document.getElementById("downloadPDF").onclick = function () {
+        const jsPDF = window.jspdf.jsPDF;
+        const doc = new jsPDF();
+        const outputElement = document.getElementById("output");
+        const sections = outputElement.querySelectorAll("strong");
+        const tables = outputElement.querySelectorAll("table");
 
-      doc.setFontSize(12);
-      doc.text("Debre Mitmak Saint Mary Offering Summary", 14, 15);
-      let y = 25;
+        let y = 15;
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        const title = "Debre Mitmak Saint Mary Offering Summary";
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const textWidth = doc.getTextWidth(title);
+        const centerX = (pageWidth - textWidth) / 2;
+        doc.text(title, centerX, y);
+        doc.setFont(undefined, 'normal');
+        y += 10;
 
-      const outputElement = document.getElementById("output");
-      const tables = outputElement.querySelectorAll("table");
-      const titles = outputElement.querySelectorAll("strong");
+        tables.forEach((table, index) => {
+          const heading = sections[index]?.textContent || '';
+          const rows = Array.from(table.querySelectorAll("tr"));
+          const body = rows.slice(1).map(row => Array.from(row.querySelectorAll("td")).map(td => td.textContent));
 
-      tables.forEach((table, index) => {
-        const sectionTitle = titles[index]?.textContent || "";
-        const rows = Array.from(table.rows);
-        const body = rows.map(row => [row.cells[0].textContent, row.cells[1].textContent]);
-
-        doc.autoTable({
-          startY: y,
-          head: [[sectionTitle, ""]],
-          body: body,
-          styles: { fontSize: 10 },
-          margin: { left: 14, right: 14 },
-          theme: 'grid',
-          didDrawPage: function (data) {
-            y = data.cursor.y + 10;
-          }
+          doc.autoTable({
+            startY: y,
+            head: [["Type", "Amount ($)", "From"]],
+            body: body,
+            styles: { fontSize: 10 },
+            margin: { left: 14, right: 14 },
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185] },
+            didDrawPage: function (data) {
+              y = data.cursor.y + 10;
+            },
+            didDrawCell: function (data) {
+              if (data.row.index === 0 && data.column.index === 0) {
+                doc.setFont(undefined, 'bold');
+                doc.text(heading, data.settings.margin.left, data.row.y - 5);
+                doc.setFont(undefined, 'normal');
+              }
+            }
+          });
         });
 
-        if (y > 260) {
-          doc.addPage();
-          y = 25;
-        }
-      });
+        const now = new Date();
+        const timestamp = now.toLocaleString();
+        doc.setFontSize(10);
+        doc.text(`Generated on ${timestamp}`, 14, 285);
 
-      doc.setFontSize(10);
-      doc.text(`Generated on ${timestamp}`, 14, 285);
-      doc.save(filename);
+        const filename = `Offering_Form_${now.toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+      };
     });
   </script>
 </body>
